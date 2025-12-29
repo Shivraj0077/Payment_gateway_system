@@ -22,7 +22,6 @@ async function sendWebhook(url, event) {
   }
 }
 
-
 export async function POST(req) {
   try {
     const auth = req.headers.get("authorization");
@@ -32,12 +31,12 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const { amount, payment_method, order_id, webhook_url } = body;
+    const { amount, payment_method, order_id, webhook_url, customer_name } = body;
 
-    if (!amount || !payment_method || !order_id || !webhook_url) {
+    if (!amount || !payment_method || !order_id || !webhook_url || !customer_name) {
       return NextResponse.json(
         {
-          error: "Missing fields: amount, payment_method, order_id, webhook_url required"
+          error: "Missing fields: amount, payment_method, order_id, webhook_url, customer_name required"
         },
         { status: 400 }
       );
@@ -64,6 +63,7 @@ export async function POST(req) {
         currency: "INR",
         order_id,
         payment_method,
+        customer_name,
         webhook_url
       }
     });
@@ -82,6 +82,7 @@ export async function POST(req) {
       amount,
       currency: "INR",
       payment_method,
+      customer_name,
       order_id,
       status: "created"
     });

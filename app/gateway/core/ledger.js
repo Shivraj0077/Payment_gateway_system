@@ -1,32 +1,56 @@
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseServer } from "@/lib/supabaseServer";
 
-/**
- * Enforces double-entry accounting
- */
-export async function postLedgerEntries({ event, entries }) {
-  const totalDebit = entries.reduce((s, e) => s + e.debit, 0);
-  const totalCredit = entries.reduce((s, e) => s + e.credit, 0);
 
-  if (totalDebit !== totalCredit) {
-    throw new Error("Ledger imbalance: debit != credit");
-  }
+export async function recordCaptureLedger({ chargeId, amount, currency, customer_name, payment_method, description }) {
+  const fee = amount * 0.03; 
+  // Simple 3% platform fee
+  const merchantAmount = amount - fee;
 
-  const rows = entries.map(e => ({
-    event_id: event.id,
-    aggregate_id: event.aggregate_id,
-    aggregate_type: event.aggregate_type,
-    account: e.account,
-    debit: e.debit,
-    credit: e.credit,
-    currency: "INR"
-  }));
+  // Double-Entry Transactions:
+  // 1. Debit Customer (Total Amount)
+  // 2. Credit Merchant (Amount - Fee)
+  // 3. Credit Platform (Fee)
 
-  const { error } = await supabase
-    .from("ledger_entries")
-    .insert(rows);
+  const entries = [
+    {
+      aggregate_id: chargeId,
+      aggregate_type: "charge",
+      account_type: "customer_debit",
+      debit: amount,
+      credit: 0,
+      currency,
+      customer_name,
+      payment_method,
+      description: description || "Payment Capture"
+    },
+    {
+      aggregate_id: chargeId,
+      aggregate_type: "charge",
+      account_type: "merchant_escrow",
+      debit: 0,
+      credit: merchantAmount,
+      currency,
+      customer_name,
+      payment_method,
+      description: description || "Merchant Settlement share"
+    },
+    {
+      aggregate_id: chargeId,
+      aggregate_type: "charge",
+      account_type: "platform_fee",
+      debit: 0,
+      credit: fee,
+      currency,
+      customer_name,
+      payment_method,
+      description: description || "Platform Transaction Fee"
+    }
+  ];
+
+  const { error } = await supabaseServer.from("ledger_entries").insert(entries);
 
   if (error) {
-    console.error(error);
-    throw new Error("Ledger write failed");
+    console.error("Ledger Entry Failed:", error);
+    throw new Error("Financial Ledger recording failed");
   }
 }

@@ -35,7 +35,7 @@ export default async function PaymentDetails({ params }) {
     const events = eventsRes.events ?? [];
 
     return (
-      <div style={{ padding: 24 }}>
+      <div style={{ padding: 24 , backgroundColor: "grey"}}>
         <h1>Payment Details</h1>
         <a href="/gateway/payments">← Back to Payments</a>
 
@@ -67,9 +67,9 @@ export default async function PaymentDetails({ params }) {
               <tbody>
                 {ledger.map((l, i) => (
                   <tr key={i}>
-                    <td>{l.account}</td>
-                    <td>{l.debit ? `₹${l.debit}` : "-"}</td>
-                    <td>{l.credit ? `₹${l.credit}` : "-"}</td>
+                    <td>{l.account_type}</td>
+                    <td>{l.debit ? `₹${l.debit}` : " -- "}</td>
+                    <td>{l.credit ? `₹${l.credit}` : " --"}</td>
                   </tr>
                 ))}
               </tbody>

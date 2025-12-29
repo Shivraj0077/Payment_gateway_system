@@ -21,11 +21,24 @@ export async function POST(req) {
 
   const event = JSON.parse(rawBody);
 
+  const { data: order, error: orderErr } = await supabase
+    .from("orders")
+    .select()
+    .eq("id", event.data.order_id)
+    .single()
+
+  if (orderErr || !order) {
+    return Response.json({ error: "Order not found" }, { status: 404 });
+  }
+
+  // We no longer update the order status to 'authorized'.
+  // The order stays in 'payment_pending' until it is 'captured' (paid).
   if (event.type === "charge.authorized") {
-    await supabase
-      .from("orders")
-      .update({ status: "authorized" })
-      .eq("id", event.data.order_id);
+    if (order.status === "payment_pending") {
+      console.log(`Charge authorized for order ${event.data.order_id}. Order remains payment_pending.`);
+    } else {
+      console.warn(`Unexpected state for charge.authorized: ${order.status}`)
+    }
   }
 
   if (event.type === "charge.captured") {

@@ -11,6 +11,7 @@ export default function CheckoutPage() {
 
   const [card, setCard] = useState("");
   const [message, setMessage] = useState("");
+  const [customerName, setCustomerName] = useState("");
 
   async function handlePay() {
     setMessage("Processing...");
@@ -32,7 +33,7 @@ export default function CheckoutPage() {
     const orderRes = await fetch("/merchant/api/create-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount })
+      body: JSON.stringify({ amount, customer_name: customerName })
     });
 
     const order = await orderRes.json();
@@ -42,6 +43,7 @@ export default function CheckoutPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        customer_name: customerName,
         order_id: order.order.id,
         card_token: token.token
       })
@@ -67,6 +69,12 @@ export default function CheckoutPage() {
         placeholder="Card number"
         value={card}
         onChange={e => setCard(e.target.value)}
+      />
+
+      <input
+        placeholder="Customer name"
+        value={customerName}
+        onChange={e => setCustomerName(e.target.value)}
       />
 
       <br /><br />

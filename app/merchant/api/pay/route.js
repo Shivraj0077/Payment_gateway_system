@@ -28,14 +28,14 @@ export async function POST(req) {
             method: "POST",
             headers: {
                 "Authorization": "Bearer merchant_test_key",
-                // Correct header key for JSON requests
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
                 amount: order.amount,
                 payment_method: card_token,
+                customer_name: order.customer_name,
                 order_id,
-                // Webhook so gateway can notify merchant backend
+                // this is the webhook that we call that this event is occured now move to next functional call for next event occurence
                 webhook_url: `${process.env.NEXT_PUBLIC_URL}/merchant/api/webhooks`,
             })
         }
@@ -61,12 +61,12 @@ export async function POST(req) {
 
         const capturedCharge = await captureRes.json();
 
-        // Update order with captured charge status
+        // Update order with charge_id. 
+        // We do NOT update status here synchronously; we wait for the webhook.
         await supabase
             .from("orders")
             .update({
-                charge_id: capturedCharge.id || charge.id,
-                status: capturedCharge.status || charge.status
+                charge_id: capturedCharge.id || charge.id
             })
             .eq("id", order_id)
 

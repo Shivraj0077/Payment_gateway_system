@@ -4,6 +4,8 @@ import { appendEvent } from "@/app/gateway/core/eventStore";
 import { rebuildCharge } from "@/app/gateway/core/rebuildCharge";
 import { supabaseServer } from "@/lib/supabaseServer";
 
+import { recordCaptureLedger } from "@/app/gateway/core/ledger";
+
 export async function POST(req, { params }) {
   try {
     /* ---------- auth ---------- */
@@ -57,6 +59,16 @@ export async function POST(req, { params }) {
       }
     });
 
+    /* ---------- record ledger ---------- */
+    // This is where the double-entry accounting happens
+    await recordCaptureLedger({
+      chargeId: charge.id,
+      amount: charge.amount,
+      currency: charge.currency || "INR",
+      customer_name: charge.customer_name,
+      payment_method: charge.payment_method
+    });
+
     /* ---------- update projection ---------- */
     await supabaseServer
       .from("gateway_charges")
@@ -74,8 +86,9 @@ export async function POST(req, { params }) {
     };
 
     const payload = JSON.stringify(webhookEvent);
+    const secret = process.env.GATEWAY_WEBHOOK_SECRET || "whsec_0e69200438b39bb3cbc5de1f01f9302ea2edca9bd5538b938f85891f50afae02";
     const signature = crypto
-      .createHmac("sha256", process.env.WEBHOOK_SECRET)
+      .createHmac("sha256", secret)
       .update(payload)
       .digest("hex");
 

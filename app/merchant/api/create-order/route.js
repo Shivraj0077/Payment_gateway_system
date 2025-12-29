@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabaseClient";
 export async function POST(req) {
     try {
         const body = await req.json();
-        const { amount, customer_email } = body;
+        const { amount, customer_name } = body;
 
         if (!amount) {
             return Response.json({ error: "amount not provided" }, { status: 400 })
@@ -11,7 +11,7 @@ export async function POST(req) {
 
         const { data, error } = await supabase
             .from("orders")
-            .insert([{ amount, customer_email, status: "created" }])
+            .insert([{ amount, customer_name, status: "created" }])
             .select()
             .single()
 
