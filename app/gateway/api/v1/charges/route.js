@@ -32,6 +32,8 @@ export async function POST(req) {
 
     const body = await req.json();
     const { amount, payment_method, order_id, webhook_url, customer_name } = body;
+    const platform_fee = Math.round(amount * (0.03));
+    const net_amount = amount - platform_fee;
 
     if (!amount || !payment_method || !order_id || !webhook_url || !customer_name) {
       return NextResponse.json(
@@ -64,6 +66,8 @@ export async function POST(req) {
         order_id,
         payment_method,
         customer_name,
+        platform_fee,
+        net_amount,
         webhook_url
       }
     });
@@ -77,19 +81,38 @@ export async function POST(req) {
     });
 
     // Persist charge snapshot into gateway_charges read model
-    await supabaseServer.from("gateway_charges").insert({
+    const chargePayload = {
       id: charge_id,
       amount,
       currency: "INR",
+      platform_fee,
+      net_amount,
       payment_method,
       customer_name,
       order_id,
       status: "created"
-    });
+    };
 
-    await supabaseServer.from("gateway_charges").update({
+
+    const { data: insertData, error: insertError } = await supabaseServer
+      .from("gateway_charges")
+      .insert(chargePayload)
+      .select();
+
+    if (insertError) {
+      console.error("Failed to insert into gateway_charges:", insertError);
+      throw new Error(`Projection update failed: ${insertError.message}`);
+    }
+
+
+    const { error: updateError } = await supabaseServer.from("gateway_charges").update({
       status: "authorized"
     }).eq("id", charge_id);
+
+    if (updateError) {
+      console.error("Failed to update gateway_charges status:", updateError);
+      throw new Error(`Projection update failed (update): ${updateError.message}`);
+    }
 
     // Notify merchant backend
     await sendWebhook(webhook_url, {

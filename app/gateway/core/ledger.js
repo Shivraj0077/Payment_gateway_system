@@ -1,10 +1,9 @@
 import { supabaseServer } from "@/lib/supabaseServer";
 
 
-export async function recordCaptureLedger({ chargeId, amount, currency, customer_name, payment_method, description }) {
-  const fee = amount * 0.03; 
+export async function recordCaptureLedger({ chargeId, amount, customer_name, currency, platform_fee, net_amount, description }) {
   // Simple 3% platform fee
-  const merchantAmount = amount - fee;
+  
 
   // Double-Entry Transactions:
   // 1. Debit Customer (Total Amount)
@@ -15,34 +14,31 @@ export async function recordCaptureLedger({ chargeId, amount, currency, customer
     {
       aggregate_id: chargeId,
       aggregate_type: "charge",
-      account_type: "customer_debit",
+      account_type: "customer",
+      account_ref: customer_name,
       debit: amount,
       credit: 0,
       currency,
-      customer_name,
-      payment_method,
       description: description || "Payment Capture"
     },
     {
       aggregate_id: chargeId,
       aggregate_type: "charge",
-      account_type: "merchant_escrow",
+      account_type: "merchant",
+      account_ref: "MERCHANT",
       debit: 0,
-      credit: merchantAmount,
+      credit: net_amount,
       currency,
-      customer_name,
-      payment_method,
       description: description || "Merchant Settlement share"
     },
     {
       aggregate_id: chargeId,
       aggregate_type: "charge",
-      account_type: "platform_fee",
+      account_type: "platform",
+      account_ref: "PLATFORM",
       debit: 0,
-      credit: fee,
+      credit: platform_fee,
       currency,
-      customer_name,
-      payment_method,
       description: description || "Platform Transaction Fee"
     }
   ];

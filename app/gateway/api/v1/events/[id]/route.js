@@ -9,7 +9,6 @@ export async function GET(req, { params }) {
         }
 
         const { id } = await params;
-        console.log(`[API] Fetching events for Charge ID: ${id}`);
 
         const { data, error } = await supabaseServer
             .from("events")

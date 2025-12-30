@@ -42,6 +42,7 @@ export async function POST(req) {
   }
 
   if (event.type === "charge.captured") {
+    console.log(`Charge captured for order ${event.data.order_id}. Order got paid!`)
     await supabase
       .from("orders")
       .update({ status: "paid" })

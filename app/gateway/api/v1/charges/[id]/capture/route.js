@@ -65,6 +65,8 @@ export async function POST(req, { params }) {
       chargeId: charge.id,
       amount: charge.amount,
       currency: charge.currency || "INR",
+      platform_fee: charge.platform_fee,
+      net_amount: charge.net_amount,
       customer_name: charge.customer_name,
       payment_method: charge.payment_method
     });
