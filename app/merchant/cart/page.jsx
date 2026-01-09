@@ -9,7 +9,7 @@ export default function CartPage() {
   const total = cart.reduce((sum, p) => sum + p.price, 0);
 
   return (
-    <div style={{ padding: 20 }}>
+    <div className="p-3 bg-blue-300">
       <h1>Your Cart</h1>
 
       {cart.length === 0 && <p>No items in cart</p>}

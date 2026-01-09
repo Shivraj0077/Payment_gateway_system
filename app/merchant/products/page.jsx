@@ -7,7 +7,7 @@ export default function ProductsPage() {
   const { cart, addToCart } = useCart();
 
   return (
-    <div style={{ padding: 20 }}>
+    <div className="p-3 bg-blue-300">
       <h1>Products</h1>
 
       {products.map(p => (

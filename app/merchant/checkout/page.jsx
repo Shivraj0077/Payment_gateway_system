@@ -60,7 +60,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div style={{ padding: 20 }}>
+    <div className="p-3 bg-blue-300">
       <h1>Checkout</h1>
 
       <p>Total: ₹{amount}</p>

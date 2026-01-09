@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
-import crypto from "crypto";
+import crypto from "node:crypto";
 
 function verifySignature(payload, signature) {
   const secret = process.env.MERCHANT_WEBHOOK_SECRET || "whsec_0e69200438b39bb3cbc5de1f01f9302ea2edca9bd5538b938f85891f50afae02";

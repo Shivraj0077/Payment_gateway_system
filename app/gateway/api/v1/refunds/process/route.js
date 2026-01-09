@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { randomUUID } from 'crypto';
 import { supabaseServer } from '@/lib/supabaseServer';
+import crypto from "node:crypto";
 
 export async function POST(req) {
   try {
@@ -37,8 +37,8 @@ export async function POST(req) {
       );
     }
 
-    const refundId = randomUUID();
-    const eventId = randomUUID();
+    const refundId = crypto.randomUUID();
+    const eventId = crypto.randomUUID();
 
     const { error: refundError } = await supabaseServer
       .from('refunds')
@@ -94,6 +94,8 @@ export async function POST(req) {
         description: 'Refund debited from merchant'
       }
     ];
+
+    //"Here we dont use platform fee in ledger entries as we are making (-amount) in merchant platform fees remains stable"
 
     const { error: ledgerError } = await supabaseServer
       .from('ledger_entries')
