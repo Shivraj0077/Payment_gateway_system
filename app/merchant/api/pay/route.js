@@ -71,7 +71,7 @@ export async function POST(req) {
             .eq("id", order_id)
 
         return Response.json({
-            success: true,
+            success: capturedCharge.status === 'captured',
             charge_id: capturedCharge.id || charge.id,
             status: capturedCharge.status || charge.status
         });

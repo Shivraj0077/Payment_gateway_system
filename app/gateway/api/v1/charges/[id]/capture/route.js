@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { appendEvent } from "@/app/gateway/core/eventStore";
 import { rebuildCharge } from "@/app/gateway/core/rebuildCharge";
 import { supabaseServer } from "@/lib/supabaseServer";
+import crypto from "node:crypto";
 
 import { recordCaptureLedger } from "@/app/gateway/core/ledger";
 

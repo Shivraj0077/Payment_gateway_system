@@ -51,7 +51,7 @@ export default function CheckoutPage() {
 
     const result = await payRes.json();
 
-    if (result.success) {
+    if (result.status === "captured") {
       clearCart();
       setMessage("Payment Successful :)");
     } else {
