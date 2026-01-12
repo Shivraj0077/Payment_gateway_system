@@ -44,7 +44,7 @@ Merchant Backend
    ↓
 Payment Gateway API
    ↓
-Bank / Network (Authorization)
+Network (Authorization)
    ↓
 Payment Gateway
    ├─ Capture
@@ -92,8 +92,6 @@ These components exist inside Stripe, Razorpay, PayPal, Adyen.
 * Internal merchant balances (escrow)
 * Platform fee accounting
 * Reconciliation between events, ledger, and balances
-
-> This is **non-negotiable** in real fintech.
 
 ---
 
