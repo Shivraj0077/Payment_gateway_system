@@ -13,8 +13,6 @@
 * [Webhooks System](#webhooks-system)
 * [Security & API Design](#security--api-design)
 * [Demo Model](#demo-model)
-* [Interview Highlights](#interview-highlights)
-
 ---
 
 ## Overview
@@ -67,7 +65,7 @@ These components exist inside Stripe, Razorpay, PayPal, Adyen.
 
 1. **Payment Intent / Charge Object**
    Tracks lifecycle:
-   `created → authorized → captured → settled → payout → refunded`
+   `created → authorized → captured → settled → payout → request for refund → refunded`
 
 2. **Authorization**
    Bank confirms funds (no money moves)
