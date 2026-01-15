@@ -31,7 +31,7 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const { amount, payment_method, order_id, webhook_url, customer_name } = body;
+    const { amount, payment_method, order_id, webhook_url, customer_name, simulate_webhook_failure } = body;
     const platform_fee = Math.round(amount * (0.03));
     const net_amount = amount - platform_fee;
 
@@ -68,7 +68,8 @@ export async function POST(req) {
         customer_name,
         platform_fee,
         net_amount,
-        webhook_url
+        webhook_url,
+        simulate_webhook_failure
       }
     });
 

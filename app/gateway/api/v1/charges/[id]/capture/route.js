@@ -77,30 +77,19 @@ export async function POST(req, { params }) {
       .update({ status: "captured" })
       .eq("id", charge.id);
 
-    /* ---------- webhook ---------- */
-    const webhookEvent = {
-      type: "charge.captured",
-      data: {
-        charge_id: charge.id,
-        order_id: charge.order_id,
-        amount: charge.amount
+    /* ---------- enqueue webhook ---------- */
+    await supabaseServer.from("webhook_deliveries").insert({
+      event_type: "charge.captured",
+      webhook_url: charge.webhook_url,
+      payload: {
+        type: "charge.captured",
+        data: {
+          charge_id: charge.id,
+          order_id: charge.order_id,
+          amount: charge.amount
+        },
+        simulate_failure: charge.simulate_webhook_failure === true
       }
-    };
-
-    const payload = JSON.stringify(webhookEvent);
-    const secret = process.env.GATEWAY_WEBHOOK_SECRET || "whsec_0e69200438b39bb3cbc5de1f01f9302ea2edca9bd5538b938f85891f50afae02";
-    const signature = crypto
-      .createHmac("sha256", secret)
-      .update(payload)
-      .digest("hex");
-
-    await fetch(charge.webhook_url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-webhook-signature": signature
-      },
-      body: payload
     });
 
     return NextResponse.json({

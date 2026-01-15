@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useCart } from "../context/page";
+import { useCart } from "../context/CartContext";
 import { useSearchParams } from "next/navigation";
 
 export default function CheckoutPage() {
@@ -13,8 +13,8 @@ export default function CheckoutPage() {
   const [message, setMessage] = useState("");
   const [customerName, setCustomerName] = useState("");
 
-  async function handlePay() {
-    setMessage("Processing...");
+  async function handlePay(simulateDispatcherFailure = false) {
+    setMessage(simulateDispatcherFailure ? "Simulating Failure & Dispatcher Recovery..." : "Processing...");
 
     // Tokenize card
     const tokenRes = await fetch("/gateway/api/v1/tokens", {
@@ -36,7 +36,8 @@ export default function CheckoutPage() {
       body: JSON.stringify({ amount, customer_name: customerName })
     });
 
-    const order = await orderRes.json();
+    const orderJson = await orderRes.json();
+    const orderId = orderJson.order.id;
 
     // Pay
     const payRes = await fetch("/merchant/api/pay", {
@@ -44,16 +45,32 @@ export default function CheckoutPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         customer_name: customerName,
-        order_id: order.order.id,
-        card_token: token.token
+        order_id: orderId,
+        card_token: token.token,
+        simulate_webhook_failure: simulateDispatcherFailure
       })
     });
 
     const result = await payRes.json();
 
-    if (result.status === "captured") {
-      clearCart();
-      setMessage("Payment Successful :)");
+    if (result.success || result.status === "captured") {
+      if (simulateDispatcherFailure) {
+        setMessage("Payment captured but Webhook FAILED (as expected). Dispatcher is recovering...");
+
+        // Poll for order status
+        const interval = setInterval(async () => {
+          const checkRes = await fetch(`/merchant/api/orders/${orderId}`);
+          const order = await checkRes.json();
+          if (order.status === "paid") {
+            clearInterval(interval);
+            clearCart();
+            setMessage("Dispatcher recovered the event! Payment Successful :)");
+          }
+        }, 2000);
+      } else {
+        clearCart();
+        setMessage("Payment Successful :)");
+      }
     } else {
       setMessage("Payment Failed :(");
     }
@@ -69,19 +86,32 @@ export default function CheckoutPage() {
         placeholder="Card number"
         value={card}
         onChange={e => setCard(e.target.value)}
+        className="mb-2 p-2 block"
       />
 
       <input
         placeholder="Customer name"
         value={customerName}
         onChange={e => setCustomerName(e.target.value)}
+        className="mb-4 p-2 block"
       />
 
-      <br /><br />
+      <div className="flex gap-2">
+        <button
+          onClick={() => handlePay(false)}
+          className="bg-black text-white px-4 py-2 rounded"
+        >
+          Pay Normally
+        </button>
+        <button
+          onClick={() => handlePay(true)}
+          className="bg-orange-600 text-white px-4 py-2 rounded"
+        >
+          Pay with Testing Dispatcher
+        </button>
+      </div>
 
-      <button onClick={handlePay}>Pay Now</button>
-
-      <h3>{message}</h3>
+      <h3 className="mt-4 font-semibold">{message}</h3>
     </div>
   );
 }

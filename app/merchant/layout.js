@@ -1,4 +1,4 @@
-import { CartProvider } from "./context/page";
+import { CartProvider } from "./context/CartContext";
 
 export default function MerchantLayout({ children }) {
   return (

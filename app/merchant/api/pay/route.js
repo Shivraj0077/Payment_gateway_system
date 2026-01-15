@@ -35,6 +35,7 @@ export async function POST(req) {
                 payment_method: card_token,
                 customer_name: order.customer_name,
                 order_id,
+                simulate_webhook_failure: body.simulate_webhook_failure,
                 // this is the webhook that we call that this event is occured now move to next functional call for next event occurence
                 webhook_url: `${process.env.NEXT_PUBLIC_URL}/merchant/api/webhooks`,
             })

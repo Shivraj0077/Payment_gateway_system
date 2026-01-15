@@ -1,7 +1,7 @@
 "use client";
 
 import { products } from "../data/products";
-import { useCart } from "../context/page";
+import { useCart } from "../context/CartContext";
 
 export default function ProductsPage() {
   const { cart, addToCart } = useCart();
