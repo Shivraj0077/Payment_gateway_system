@@ -575,6 +575,11 @@ function FinalCTA() {
                     <div className="mt-6 sm:mt-8 text-xs sm:text-sm text-gray-400 dark:text-gray-500">
                         © 2026 Vault. Infrastructure for modern payments.
                     </div>
+<span className="italic text-gray-400 dark:text-gray-500">
+  Built by Shivraj Pawar
+</span>
+
+
                 </div>
             </div>
         </section>
