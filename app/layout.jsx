@@ -23,7 +23,7 @@ export const metadata = {
     url: 'https://payment-gateway-system-six.vercel.app/',
     images: [
       {
-        url: 'https://postimg.cc/HrPj465H',
+        url: 'https://ik.imagekit.io/uk3lqzldw/payment-gateway.png',
         width: 1200,
         height: 630,
         alt: 'Vault Preview'
