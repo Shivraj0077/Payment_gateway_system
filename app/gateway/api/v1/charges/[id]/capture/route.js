@@ -3,15 +3,18 @@ import { appendEvent } from "@/app/gateway/core/eventStore";
 import { rebuildCharge } from "@/app/gateway/core/rebuildCharge";
 import { supabaseServer } from "@/lib/supabaseServer";
 import crypto from "node:crypto";
+import { authorizeMerchant } from "@/lib/auth";
 
 import { recordCaptureLedger } from "@/app/gateway/core/ledger";
+import { runWebhookDispatcher } from "@/app/gateway/workers/webhookDispatcher";
 
 export async function POST(req, { params }) {
   try {
     /* ---------- auth ---------- */
-    const auth = req.headers.get("authorization");
-    if (!auth || !auth.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const merchant = await authorizeMerchant(req);
+
+    if (!merchant) {
+      return NextResponse.json({ error: "Invalid Private Key" }, { status: 401 });
     }
 
     /* ---------- params ---------- */
@@ -19,7 +22,7 @@ export async function POST(req, { params }) {
 
     if (!chargeId) {
       return NextResponse.json(
-        { error: "charge id required" },
+        { error: "Charge ID required" },
         { status: 400 }
       );
     }
@@ -41,9 +44,14 @@ export async function POST(req, { params }) {
     /* ---------- rebuild charge ---------- */
     const charge = rebuildCharge(events);
 
+    // SECURITY: Ensure ONLY the merchant owning the charge can process it
+    if (charge.merchant_id !== merchant.id) {
+       return NextResponse.json({ error: "Unauthorized access to this charge" }, { status: 403 });
+    }
+
     if (charge.status !== "authorized") {
       return NextResponse.json(
-        { error: "Charge cannot be captured" },
+        { error: "Charge cannot be captured (status: " + charge.status + ")" },
         { status: 400 }
       );
     }
@@ -62,6 +70,7 @@ export async function POST(req, { params }) {
     /* ---------- record ledger ---------- */
     // This is where the double-entry accounting happens
     await recordCaptureLedger({
+      merchant_id: charge.merchant_id,
       chargeId: charge.id,
       amount: charge.amount,
       currency: charge.currency || "INR",
@@ -74,13 +83,16 @@ export async function POST(req, { params }) {
     /* ---------- update projection ---------- */
     await supabaseServer
       .from("gateway_charges")
-      .update({ status: "captured" })
+      .update({ status: "paid" })
       .eq("id", charge.id);
 
     /* ---------- enqueue webhook ---------- */
     await supabaseServer.from("webhook_deliveries").insert({
       event_type: "charge.captured",
       webhook_url: charge.webhook_url,
+      status: "pending",
+      next_retry_at: new Date().toISOString(),
+      attempt_count: 0,
       payload: {
         type: "charge.captured",
         data: {
@@ -94,7 +106,7 @@ export async function POST(req, { params }) {
 
     return NextResponse.json({
       id: charge.id,
-      status: "captured"
+      status: "paid"
     });
   } catch (err) {
     console.error(err);

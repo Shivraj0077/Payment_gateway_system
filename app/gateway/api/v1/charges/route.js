@@ -1,33 +1,38 @@
+import { authorizeMerchant } from "@/lib/auth";
 import { signPayload } from "@/app/gateway/utils/signWebhook";
 import { NextResponse } from "next/server";
 import { appendEvent } from "@/app/gateway/core/eventStore";
 import { supabaseServer } from "@/lib/supabaseServer";
 
-async function sendWebhook(url, event) {
-  const payload = JSON.stringify(event);
-  const secret = process.env.GATEWAY_WEBHOOK_SECRET || "whsec_0e69200438b39bb3cbc5de1f01f9302ea2edca9bd5538b938f85891f50afae02";
-  const signature = signPayload(payload, secret);
-
-  try {
-    await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-webhook-signature": signature,
-      },
-      body: payload,
-    });
-  } catch (err) {
-    console.error("Webhook delivery failed", err.message);
-  }
-}
 
 export async function POST(req) {
   try {
-    const auth = req.headers.get("authorization");
+    // 1. Authenticate the Merchant!
+    const merchant = await authorizeMerchant(req);
 
-    if (!auth || !auth.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!merchant) {
+      return NextResponse.json({ error: "Invalid Secret Key" }, { status: 401 });
+    }
+
+    // 2. Check for Idempotency-Key
+    const idempotencyKey = req.headers.get("x-idempotency-key");
+    if (idempotencyKey) {
+      const { data: existingCharge } = await supabaseServer
+        .from("gateway_charges")
+        .select("id, amount, status")
+        .eq("merchant_id", merchant.id)
+        .eq("idempotenct_key", idempotencyKey)
+        .single();
+
+      if (existingCharge) {
+        console.warn(`Idempotent hit for ${idempotencyKey}`);
+        return NextResponse.json({
+          id: existingCharge.id,
+          status: existingCharge.status,
+          amount: existingCharge.amount,
+          remark: "Cached hit"
+        });
+      }
     }
 
     const body = await req.json();
@@ -42,13 +47,6 @@ export async function POST(req) {
         },
         { status: 400 }
       );
-    }
-
-    if (amount <= 0) {
-      return NextResponse.json(
-        { error: "Amount must be greater than 0" },
-        { status: 400 }
-      )
     }
 
     // STEP 1: "Create" charge
@@ -69,7 +67,8 @@ export async function POST(req) {
         platform_fee,
         net_amount,
         webhook_url,
-        simulate_webhook_failure
+        simulate_webhook_failure,
+        merchant_id: merchant.id // NEW: Track merchant in events!
       }
     });
 
@@ -84,6 +83,8 @@ export async function POST(req) {
     // Persist charge snapshot into gateway_charges read model
     const chargePayload = {
       id: charge_id,
+      merchant_id: merchant.id, // NEW: Filterable by dashboard
+      idempotenct_key: idempotencyKey, // NEW: Reliability
       amount,
       currency: "INR",
       platform_fee,
@@ -91,34 +92,31 @@ export async function POST(req) {
       payment_method,
       customer_name,
       order_id,
-      status: "created"
+      status: "authorized" // Start as authorized!
     };
 
 
-    const { data: insertData, error: insertError } = await supabaseServer
+    const { error: insertError } = await supabaseServer
       .from("gateway_charges")
-      .insert(chargePayload)
-      .select();
+      .insert(chargePayload);
 
     if (insertError) {
       console.error("Failed to insert into gateway_charges:", insertError);
       throw new Error(`Projection update failed: ${insertError.message}`);
     }
 
-
-    const { error: updateError } = await supabaseServer.from("gateway_charges").update({
-      status: "authorized"
-    }).eq("id", charge_id);
-
-    if (updateError) {
-      console.error("Failed to update gateway_charges status:", updateError);
-      throw new Error(`Projection update failed (update): ${updateError.message}`);
-    }
-
-    // Notify merchant backend
-    await sendWebhook(webhook_url, {
-      type: "charge.authorized",
-      data: { charge_id, order_id, amount }
+    // QUEUE -> WORKER: Enqueue the webhook delivery instead of synchronous fetch!
+    await supabaseServer.from("webhook_deliveries").insert({
+      event_type: "charge.authorized",
+      webhook_url: webhook_url,
+      status: "pending",
+      next_retry_at: new Date().toISOString(),
+      attempt_count: 0,
+      payload: {
+        type: "charge.authorized",
+        data: { charge_id, order_id, amount, merchant_id: merchant.id },
+        simulate_failure: simulate_webhook_failure === true
+      }
     });
 
     // STEP 3: Return charge to merchant backend

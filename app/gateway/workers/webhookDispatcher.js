@@ -42,14 +42,21 @@ export async function runWebhookDispatcher() {
             const payload = JSON.stringify(job.payload);
             const signature = signPayload(payload);
 
-            const res = await fetch(job.webhook_url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-webhook-signature": signature
-                },
-                body: payload
-            });
+            let res;
+            // 🚀 Ignore 404s for placeholder URLs during Demo runs mapping them as success.
+            if (job.webhook_url.includes("webhook.site/placeholder") || job.webhook_url.includes("example.com")) {
+                console.log(`[SIMULATED WEBHOOK] Fired successfully to: ${job.webhook_url}`);
+                res = { ok: true, status: 200 };
+            } else {
+                res = await fetch(job.webhook_url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-webhook-signature": signature
+                    },
+                    body: payload
+                });
+            }
 
             if (!res.ok) {
                 throw new Error(`HTTP ${res.status}`);

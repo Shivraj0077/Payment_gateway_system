@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import heroImage from "./payment-image.png"
+import Link from 'next/link'
 // --- Constants ---
 
 const THEME_KEY = 'vault-theme'
@@ -124,16 +125,19 @@ function Navigation() {
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-background/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 transition-colors">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
                 <div className="flex items-center gap-4 md:gap-8">
-                    <div className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white transition-colors">Vault</div>
-                    <div className="hidden md:flex items-center gap-6 text-sm">
+                    <Link href="/" className="flex items-center gap-2">
+                        <div className="bg-blue-600 p-1 rounded-lg"><Shield className="w-4 h-4 text-white" /></div>
+                        <div className="text-xl font-bold tracking-tight text-gray-900 dark:text-white transition-colors uppercase italic tracking-tighter">Vault</div>
+                    </Link>
+                    <div className="hidden md:flex items-center gap-6 text-sm font-bold uppercase tracking-widest text-[10px]">
                         {NAV_LINKS.map(({ href, label }) => (
-                            <a
+                            <Link
                                 key={href}
                                 href={href}
-                                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                className="text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-white transition-colors"
                             >
                                 {label}
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>
@@ -147,13 +151,17 @@ function Navigation() {
                         {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
                     </button>
 
-                    <button className="hidden sm:block text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors px-4 py-2">
-                        Sign In
-                    </button>
+                    <Link href="/merchant/login">
+                        <button className="hidden sm:block text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-900 transition-colors px-4 py-2">
+                            Sign In
+                        </button>
+                    </Link>
 
-                    <button className="hidden sm:block text-sm bg-gray-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors font-medium">
-                        Get Started
-                    </button>
+                    <Link href="/merchant/onboarding">
+                        <button className="hidden sm:block text-[10px] bg-black dark:bg-white text-white dark:text-slate-900 px-5 py-2.5 rounded-xl hover:scale-105 transition-all font-black uppercase tracking-widest">
+                            Get Started
+                        </button>
+                    </Link>
 
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -208,52 +216,86 @@ function Hero() {
             <div className="max-w-7xl mx-auto">
                 <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
                     <div className="max-w-2xl">
-                        <h1 className="text-3xl sm:text-5xl lg:text-6xl tracking-tight mb-4 sm:mb-6 text-gray-900 dark:text-white transition-colors">
-                            Payment Gateway System
+                        <div className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 transition-colors">
+                           <Zap className="w-3 h-3 fill-current" /> Next-gen routing active
+                        </div>
+                        <h1 className="text-4xl sm:text-6xl font-black tracking-tight mb-4 sm:mb-6 text-gray-900 dark:text-white transition-colors leading-[0.9]">
+                            Begin <span className="text-blue-600 italic">integrating</span>
                         </h1>
-                        <h2 className="text-xl sm:text-3xl lg:text-4xl tracking-tight mb-4 sm:mb-6 text-gray-900 dark:text-white transition-colors">
-                            Money moves precisely
-                        </h2>
-                        <p className="text-base sm:text-xl text-gray-600 dark:text-gray-400 mb-6 sm:mb-8 leading-relaxed transition-colors">
-                            A unified API layer for accepting, processing, and reconciling payments.<br />
-                            Designed for reliability, transparency, and clean integration.
+                        <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 mb-8 sm:mb-10 leading-relaxed transition-colors font-medium">
+                            Start building with production-ready APIs. Secure, idempotent, and event-driven by design.
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                            <button className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-3 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 text-sm font-medium w-full sm:w-auto">
-                                Start Integration <ArrowRight className="w-4 h-4" />
-                            </button>
-                            <button className="border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-white px-6 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 text-sm font-medium w-full sm:w-auto">
-                                <FileText className="w-4 h-4" /> View Docs
-                            </button>
-                        </div>
-
-                        <div className="mt-8 sm:mt-12 flex flex-wrap items-center justify-center sm:justify-start gap-6 sm:gap-8 text-sm text-gray-500 dark:text-gray-400 transition-colors">
-                            <div className="text-center">
-                                <div className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white transition-colors">Event</div>
-                                <div>Sourcing</div>
-                            </div>
-                            <div className="h-10 sm:h-12 w-px bg-gray-200 dark:bg-slate-800 transition-colors"></div>
-                            <div className="text-center">
-                                <div className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white transition-colors">&lt;200ms</div>
-                                <div>Avg. Latency</div>
-                            </div>
-                            <div className="h-10 sm:h-12 w-px bg-gray-200 dark:bg-slate-800 transition-colors"></div>
-                            <div className="text-center">
-                                <div className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white transition-colors">PCI</div>
-                                <div>Standard</div>
-                            </div>
+                            <Link href="/merchant/onboarding" className="w-full sm:w-auto">
+                                <button className="bg-black dark:bg-white text-white dark:text-gray-900 px-8 py-4 rounded-xl hover:scale-105 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest w-full">
+                                    Get API Keys <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </Link>
+                            <Link href="/developers" className="w-full sm:w-auto">
+                                <button className="border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-white px-8 py-4 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest w-full">
+                                    <Code2 className="w-4 h-4" /> View Docs
+                                </button>
+                            </Link>
                         </div>
                     </div>
 
                     <div className="relative hidden lg:block">
                         <HeroVisual />
-                        <div className="absolute -bottom-6 -right-6 bg-white dark:bg-slate-800 rounded-xl shadow-lg p-4 border border-gray-100 dark:border-slate-700 transition-colors">
-                            <div className="flex items-center gap-3">
-                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                                <span className="text-sm font-medium text-gray-900 dark:text-white transition-colors">API Status: Operational</span>
-                            </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    )
+}
+
+function MerchantAccess() {
+    const [sk, setSk] = useState("");
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        if (!sk.startsWith("sk_test_")) {
+            alert("Invalid Private Key format");
+            return;
+        }
+        
+        try {
+            const res = await fetch("/gateway/api/v1/merchants/dashboard", {
+                headers: { "Authorization": `Bearer ${sk}` }
+            });
+            if (res.ok) {
+                window.location.href = `/merchant/dashboard?sk=${sk}`;
+            } else {
+                alert("Invalid Private Key. Access Denied.");
+            }
+        } catch (err) {
+            alert("Network error. Please try again.");
+        }
+    }
+
+    return (
+        <section className="py-12 px-4 sm:px-6">
+            <div className="max-w-7xl mx-auto">
+                <div className="bg-slate-900 rounded-[2.5rem] p-12 text-white relative overflow-hidden shadow-2xl">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full"></div>
+                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
+                        <div className="max-w-md">
+                            <h2 className="text-3xl font-black mb-4 tracking-tight">Merchant Access</h2>
+                            <p className="text-slate-400 font-medium">Already have your keys? Paste your Private Key below to open your secure business dashboard.</p>
                         </div>
+                        
+                        <form onSubmit={handleLogin} className="w-full max-w-md flex flex-col sm:flex-row gap-3 bg-slate-800 p-3 rounded-2xl border border-slate-700">
+                             <input 
+                                type="password" 
+                                placeholder="sk_test_..."
+                                className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-mono px-4 py-2"
+                                value={sk}
+                                onChange={e => setSk(e.target.value)}
+                                required
+                             />
+                             <button type="submit" className="bg-blue-600 text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-700 transition-all active:scale-95 shadow-lg shadow-blue-500/20">
+                                Open Dashboard
+                             </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -575,9 +617,9 @@ function FinalCTA() {
                     <div className="mt-6 sm:mt-8 text-xs sm:text-sm text-gray-400 dark:text-gray-500">
                         © 2026 Vault. Infrastructure for modern payments.
                     </div>
-<span className="italic text-gray-400 dark:text-gray-500">
-  Built by Shivraj Pawar
-</span>
+                    <span className="italic text-gray-400 dark:text-gray-500">
+                        Built by Shivraj Pawar
+                    </span>
 
 
                 </div>
@@ -591,6 +633,7 @@ export default function LandingPage() {
         <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
             <Navigation />
             <Hero />
+            <MerchantAccess />
             <Capabilities />
             <PaymentFlow />
             <DeveloperSection />

@@ -300,9 +300,9 @@ function StatusBadge({ status }) {
 
   if (success) {
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold border border-green-100 dark:border-green-800 shadow-sm">
+      <span className="inline-flex items-center gap-3 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold border border-green-100 dark:border-green-800 shadow-sm">
         <CheckCircle2 className="w-3.5 h-3.5" />
-        Captured
+        Paid
       </span>
     );
   }
