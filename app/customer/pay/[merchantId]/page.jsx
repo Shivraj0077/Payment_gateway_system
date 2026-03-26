@@ -66,18 +66,29 @@ export default function CheckoutPage({ params: paramsPromise }) {
         body: JSON.stringify({ card_number: "4242424242424242", public_key: pk }),
         headers: { "Content-Type": "application/json" }
       });
-      const { token } = await tokenRes.json();
+      const tokenData = await tokenRes.json();
+      if (!tokenRes.ok) throw new Error(tokenData.error || "Tokenization failed");
+
+      // Robust UUID fallback for insecure local testing environments
+      const generateUUID = () => {
+         return typeof crypto !== 'undefined' && crypto.randomUUID 
+           ? crypto.randomUUID() 
+           : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+               var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+               return v.toString(16);
+             });
+      };
 
       // 2. Authorize Charge
       const chargeRes = await fetch("/gateway/api/v1/charges", {
         method: "POST",
         body: JSON.stringify({ 
-          token, 
+          token: tokenData.token, 
           amount, 
           customer_name: customerName || "Guest",
           payment_method: "card",
-          order_id: crypto.randomUUID(),
-          webhook_url: merchant.webhook_url || "https://webhook.site/placeholder",
+          order_id: generateUUID(),
+          webhook_url: merchant?.webhook_url || "https://webhook.site/placeholder",
           idempotenct_key: `order_${Math.random().toString(36).substr(2, 9)}` 
         }),
         headers: { 
@@ -86,11 +97,14 @@ export default function CheckoutPage({ params: paramsPromise }) {
             "x-idempotency-key": `idemp_${Math.random().toString(36).substr(2, 9)}`
         }
       });
-      const { charge_id } = await chargeRes.json();
-      setChargeId(charge_id);
+      
+      const chargeData = await chargeRes.json();
+      if (!chargeRes.ok) throw new Error(chargeData.error || "Gateway Authorization failed");
+      
+      setChargeId(chargeData.id);
       setStep(3);
     } catch (err) {
-      setError("Payment failed. Please check your credentials.");
+      setError(err.message || "Payment failed. Please check your credentials.");
     }
     setLoading(false);
   }
@@ -225,6 +239,7 @@ export default function CheckoutPage({ params: paramsPromise }) {
                      >
                         {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <>Authorize ₹{amount} <ArrowRight className="w-5 h-5" /></>}
                      </button>
+                     {error && <p className="text-red-500 text-xs font-bold uppercase tracking-widest text-center mt-4">{error}</p>}
                   </div>
                </div>
             )}
